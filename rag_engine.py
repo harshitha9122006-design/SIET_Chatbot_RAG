@@ -24,13 +24,12 @@ def create_chunks(full_text, chunksize=500, overlap=100):
       chunks.append(chunk)
     start=end-overlap
   return chunks
-
-  #Embedding
-  def build_vectors(chunks,model_name="all-MiniLM-L6-v2"):
+ #Embedding
+ def build_vectors(chunks,model_name="all-MiniLM-L6-v2"):
     if not chunks:
       raise value error("Cannot apply embedding without chunks")
     embed_model=SentenceTransformer(model_name)
-    embed_vectors=embed_model.encode(chunks, convert-to_numpy=True)
+    embed_vectors=embed_model.encode(chunks, convert_to_numpy=True)
     faiss.normalize_L2(embed_vectors)
     index=faiss.IndexFlatIP(embed_vectors.shape[1])
     index.add(embed_vectors)
@@ -40,9 +39,9 @@ def create_chunks(full_text, chunksize=500, overlap=100):
 def load_base (pdf_path= "01_College_Information.pdf"):
   full_text=load_pdf(pdf_path)
   chunks=create_chunks(full_text)
-  index,embed_model=build_vector(chunks)
+  index,embed_model=build_vectors(chunks)
   return index,embed_model,chunks
-def retieve_chunks_content(question,embed_model,chunks,index,num_chunks=3):
+def retieve_content(question,embed_model,chunks,index,num_chunks=3):
   if not question.strip():
     raise ValueError("Question cannot be blank")
   if num_chunks<1:
@@ -51,17 +50,17 @@ def retieve_chunks_content(question,embed_model,chunks,index,num_chunks=3):
   faiss.normalize_L2(query_embed)
   sim_scores,vec_indices=index.search(query_embed,min(num_chunks,len(chunks)))
   background=""
-  for i in vec_indicates[0]:
+  for i in vec_indices[0]:
     if i!=-1:
        background+=chunks[i]+"\n\n"
   return background
 
 #Ask:
-def ask_rag(question,embed_model,chunks,index,api_key,num_chunks,model_name="openai/gpt-oss-120b"):
+def ask_rag(question,embed_model,chunks,index,api_key,num_chunks=3,model_name="openai/gpt-oss-120b"):
   key=api_key
   if not key:
     raise ValueError("API Key Missing")
-    background=retrieve_content(question,embed_model,chunks,index,num_chunks=3):
+    background=retrieve_content(question,embed_model,chunks,index,num_chunks=3)
     prompt="""You are an professional AI Assisstant.
     Answer user question using ONLY document background below.
     Do not invent or assume facts.
